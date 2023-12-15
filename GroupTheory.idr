@@ -152,7 +152,7 @@ identityImageActsLikeIdentity : {auto hmm : Homomorphic g h} -> {b : g} -> funcH
 identityImageActsLikeIdentity = Calc $
   |~ funcHom b
   ~~ funcHom (b <> identityG)  ...(rewrite identityRight b in Refl)
-  ~~ funcHom b <> funcHom {g} {h} identityG  ...(let x = sym (homomorphism {g} {h} b identityG) in ?x)
+  ~~ funcHom b <> funcHom {g} {h} identityG  ...(rewrite sym (homomorphism {g} {h} b identityG) in Refl)
 
 
 homomorphismMapsIdentity : {auto hmm : Homomorphic g h} -> {b : g} -> funcHom (identityG {g}) = (identityG {g = h})
