@@ -115,7 +115,7 @@ powG a (S k) = a <> powG a k
 (^) = powG
 
 
-sumExpLaw : {0 g : Type} -> {0 grp : Group g} -> (a : g) -> (n : Nat) -> (m : Nat) -> a ^ (n + m) = a ^ n <> a ^ m
+sumExpLaw : {0 grp : Group g} -> (a : g) -> (n : Nat) -> (m : Nat) -> a ^ (n + m) = a ^ n <> a ^ m
 sumExpLaw a 0 0 = sym $ identityLeft identityG
 sumExpLaw a 0 (S k) = sym $ identityLeft (a <> powG a k)
 sumExpLaw a (S k) 0 = Calc $
@@ -128,8 +128,7 @@ sumExpLaw a (S k) (S j) = Calc $
   ~~ (a ^ (S k)) <> a ^ (S j) ...(associative a (powG a k) (powG a (S j)))
 
 
-powGMultiplyIdentity : {0 g : Type}
-  -> {0 grp : Group g}
+powGMultiplyIdentity : {0 grp : Group g}
   -> (a : g)
   -> (n : Nat) -> a ^ n = identityG {g} -> (x : Nat) -> a ^ (x * n) = identityG {g}
 powGMultiplyIdentity a n prf 0 = Refl
@@ -148,12 +147,34 @@ interface Group g => Group h => Homomorphic g h where
   homomorphism : (x : g) -> (y : g) -> (funcHom x) <> (funcHom y) = funcHom (x <> y)
 
 
-identityImageActsLikeIdentity : {auto hmm : Homomorphic g h} -> {b : g} -> funcHom {g} {h} b = funcHom b <> funcHom (identityG {g})
+identityImageActsLikeIdentity : {hmm : Homomorphic g h} -> {b : g} -> funcHom {g} {h} b = funcHom b <> funcHom (identityG {g})
 identityImageActsLikeIdentity = Calc $
   |~ funcHom b
   ~~ funcHom (b <> identityG)  ...(rewrite identityRight b in Refl)
   ~~ funcHom b <> funcHom {g} {h} identityG  ...(rewrite sym (homomorphism {g} {h} b identityG) in Refl)
 
 
-homomorphismMapsIdentity : {auto hmm : Homomorphic g h} -> {b : g} -> funcHom (identityG {g}) = (identityG {g = h})
-homomorphismMapsIdentity = rightIdentityIsUnique (funcHom b) (funcHom {g} {h} identityG) (sym (identityImageActsLikeIdentity {h}))
+homomorphismMapsIdentity : {hmm : Homomorphic g h} -> funcHom (identityG {g}) = identityG {g = h}
+homomorphismMapsIdentity = rightIdentityIsUnique (funcHom identityG) (funcHom {g} {h} identityG) (sym (identityImageActsLikeIdentity {h}))
+
+
+pullOutExp : {auto hmm : Homomorphic g h} -> {b : g} -> (n : Nat) -> funcHom {g} {h} (b ^ n) = (funcHom b) ^ n
+pullOutExp 0 = Calc $
+  |~ funcHom (b ^ 0)
+  ~~ funcHom identityG  ...(Refl)
+  ~~ identityG ...(homomorphismMapsIdentity)
+  ~~ funcHom b ^ 0  ...(Refl)
+pullOutExp (S k) = Calc $
+  |~ funcHom (b ^ (S k))
+  ~~ funcHom (b <> b ^ k) ...(Refl)
+  ~~ funcHom b <> funcHom (b ^ k) ...(rewrite sym (homomorphism {g} {h} b (b ^ k)) in Refl)
+  ~~ funcHom b <> (funcHom b) ^ k ...(rewrite (pullOutExp {g} {h} {b} k) in Refl)
+  ~~ funcHom b ^ S k ...(Refl)
+
+
+homomorphismUpperLimitOrder : {hmm : Homomorphic g h} -> {b : g} -> (n : Nat) -> b ^ n = identityG {g} -> (funcHom {g} {h} b) ^ n = identityG {g = h}
+homomorphismUpperLimitOrder n prf = Calc $
+  |~ (funcHom b) ^ n
+  ~~ funcHom (b ^ n) ...(rewrite sym (pullOutExp {g} {h} {b} n) in Refl)
+  ~~ funcHom identityG ...(rewrite prf in Refl)
+  ~~ identityG ...(homomorphismMapsIdentity)
