@@ -178,3 +178,69 @@ homomorphismUpperLimitOrder n prf = Calc $
   ~~ funcHom (b ^ n) ...(rewrite sym (pullOutExp {g} {h} {b} n) in Refl)
   ~~ funcHom identityG ...(rewrite prf in Refl)
   ~~ identityG ...(homomorphismMapsIdentity)
+
+
+-- g should be required to be Eq, don't know how to do this
+data FreeGroup : Type -> Type where
+  IdentityF  : (g : Type) -> FreeGroup g
+  InjectF    : (a : g) -> FreeGroup g
+  InverseF   : (a : g) -> FreeGroup g
+  MultF      : (a : FreeGroup g) -> (b : FreeGroup g) -> FreeGroup g
+
+
+Eq g => Eq (FreeGroup g) where
+  (==) (IdentityF g) (IdentityF g) = True
+  (==) _ (IdentityF g) = False
+  (==) (IdentityF g) _ = False
+  (==) (InjectF a) (InjectF b) = a == b
+  (==) (InjectF a) (InverseF x) = False
+  (==) (InjectF a) (MultF x b) = False
+  (==) (InverseF a) (InverseF b) = a == b
+  (==) (InverseF a) _ = False
+  (==) (MultF a x) (MultF b y) = a == b && x == y 
+  (==) (MultF a x) _ = False
+
+
+freeGroupMult : {g : Type} -> Eq g => FreeGroup g -> FreeGroup g -> FreeGroup g
+freeGroupMult x (IdentityF g) = x
+freeGroupMult (IdentityF g) y = y
+freeGroupMult a'@(InjectF a) b'@(InjectF b) = MultF a' b'
+freeGroupMult a'@(InjectF a) b'@(InverseF b) = case a == b of
+                                              False => MultF a' b'
+                                              True => IdentityF g
+freeGroupMult a'@(InjectF a) b'@(MultF x b) = MultF a' b'
+freeGroupMult a'@(InverseF a) b'@(InjectF x) = case a == x of
+                                              False => MultF a' b'
+                                              True => IdentityF g
+freeGroupMult a'@(InverseF a) z = MultF a' z
+freeGroupMult a'@(MultF a b) b'@(MultF x y) = case b of
+  (InverseF z) => case x of
+    (InjectF w) => case z == w of
+      False => MultF a' b'
+      -- b and x are inverses
+      True => freeGroupMult a y
+    _ => MultF a' b'
+  (InjectF z) => case x of
+    (InverseF w) => case z == w of
+      False => MultF a' b'
+      -- b and x are inverses
+      True => freeGroupMult a y
+    _ => MultF a' b'
+  _ => MultF a' b'
+freeGroupMult a'@(MultF a b) y = MultF a' y
+
+
+{g : Type} -> Eq g => Group (FreeGroup g) where
+  (<>)      = freeGroupMult
+  identityG = IdentityF g
+  inverseG a = case a of
+                    e@(IdentityF g) => e
+                    (InjectF x) => InverseF x
+                    (InverseF x) => InjectF x
+                    (MultF x b) => (MultF (inverseG x) (inverseG b))
+  -- good luck with this...
+  associative   = ?c
+  identityLeft  = ?e
+  identityRight = ?f
+  inverseLeft   = ?g
+  inverseRight  = ?h
