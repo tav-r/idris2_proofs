@@ -37,4 +37,4 @@ A4 : Formula v (Box a) -> Formula v (Box (Box a))
 A4 (Nec v f) = Nec v (\w => \x => Nec w (\y => \z => f y (Transitive x z)))
 
 A5 : Formula v (Diamond a) -> Formula v (Box (Diamond a))
-A5 e@(Poss v ((w ** (x, y)))) = ?A5_rhs_2
+A5 (Poss v ((w ** (x, y)))) = Nec v \u => \z => Poss u (w ** (Euclidean z x, y))
